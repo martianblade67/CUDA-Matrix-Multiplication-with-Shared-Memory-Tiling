@@ -1,11 +1,12 @@
 #include <iostream>
 #include <chrono>  //Used for time, accurate to the nanosecond
 #include <cstdlib> //Contains rand and etc
+#include<algorithm>
 using namespace std;
 
 #define tile_size 16
 
-void Matrix_Genrator(float * a, int n){
+void Matrix_Generator(float * a, int n){
 
     auto seed = chrono::high_resolution_clock::now().time_since_epoch().count();   
 
@@ -99,8 +100,8 @@ int main(){
     float * b = new float[n*n];
     float * c = new float[n*n];
 
-    Matrix_Genrator(a,n);
-    Matrix_Genrator(b,n);
+    Matrix_Generator(a,n);
+    Matrix_Generator(b,n);
 
     float * d_a, *d_b, *d_c;
     auto size = sizeof(float)*(n*n);
@@ -121,18 +122,27 @@ int main(){
     
 
     float total_time = 0.0f;
+    cudaEvent_t start, stop; //Used to check how long the algorithm takes
+    cudaEventCreate(&start);
+    cudaEventCreate(&stop);
     for(int run=0; run<6; run++){
 
-        cudaEvent_t start, stop; //Used to check how long the algorithm takes
-        cudaEventCreate(&start);
-        cudaEventCreate(&stop);
+        
 
         cudaEventRecord(start);
 
         Tiled_Multi<<<Grid,Block>>>(d_a,d_b,d_c,n);  
 
+        
+
         cudaEventRecord(stop);                  
         cudaEventSynchronize(stop);
+
+        cudaError_t err = cudaGetLastError();
+        if(err != cudaSuccess){
+            cout << "Kernel launch error: " << cudaGetErrorString(err) << endl;
+            return 1;
+        }
         
 
         float time_taken;
@@ -161,9 +171,9 @@ int main(){
 
 
 
-    for(int i=0; i<5; i++){
+    for(int i=0; i<min(5,n); i++){
 
-        for(int j=0; j<5; j++){
+        for(int j=0; j<min(5,n); j++){
 
             cout<<c[i*n + j]<<" ";
 
