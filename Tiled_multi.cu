@@ -123,30 +123,33 @@ int main(){
 
     for(int run=0; run<6; run++){
 
-        auto start = chrono::high_resolution_clock::now();         //Used to check how long the algorithm takes
+        cudaEvent_t start, stop; //Used to check how long the algorithm takes
+        cudaEventCreate(&start);
+        cudaEventCreate(&stop);
 
-        Tiled_Multi<<<Grid,Block>>>(d_a,d_b,d_c,n);                    
-        cudaDeviceSynchronize();
+        cudaEventRecord(start);
 
-        auto end = chrono::high_resolution_clock::now();
+        Tiled_Multi<<<Grid,Block>>>(d_a,d_b,d_c,n);  
 
-        double time_taken = chrono::duration<double>(end-start).count();
-        if(run!=0){
-        total_time += time_taken;
-    }
+        cudaEventRecord(stop);                  
+        cudaEventSynchronize(stop);
+
+        float time_taken;
+        cudaEventElapsedTime(&time_taken,start,stop);
+        
 
         if(run == 0){
             cout<<"This is a warmup run ";
         }
         
-        cout<<"Run "<<run+1<<": "<<time_taken<<" seconds\n";
+        cout<<"Run "<<run+1<<": "<<time_taken<<" ms\n";
 
     }
 
 
     double average_time = total_time / 5.0;
     
-    cout<<"Average time: "<<average_time<<" seconds\n";
+    cout<<"Average time: "<<average_time<<" ms\n";
 
     cudaMemcpy(c, d_c, size, cudaMemcpyDeviceToHost);
 
