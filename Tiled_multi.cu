@@ -118,9 +118,9 @@ int main(){
     dim3 Grid (blocks, blocks);
 
     
-    double total_time = 0.0;
+    
 
-
+    float total_time = 0.0f;
     for(int run=0; run<6; run++){
 
         cudaEvent_t start, stop; //Used to check how long the algorithm takes
@@ -133,13 +133,19 @@ int main(){
 
         cudaEventRecord(stop);                  
         cudaEventSynchronize(stop);
+        
 
         float time_taken;
         cudaEventElapsedTime(&time_taken,start,stop);
         
-
+        
         if(run == 0){
             cout<<"This is a warmup run ";
+        }
+        
+        
+        if(run !=0){
+            total_time += time_taken;
         }
         
         cout<<"Run "<<run+1<<": "<<time_taken<<" ms\n";
